@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!-- ===========================================================================
+  Channelly — cloud phone-setup page (Firebase mode, no computer needed)
+
+  ONE-TIME SETUP (~5 minutes, free Spark plan):
+   1. console.firebase.google.com → Add project (any name, no Analytics needed).
+   2. Build → Firestore Database → Create database (production mode, any region).
+   3. Firestore → Rules → paste:
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /pairings/{code} {
+              allow create: if request.resource.data.keys().hasOnly(
+                ['server','username','password','name','expireAt']);
+              allow get, delete: if true;   // doc ids are unguessable 16-char codes
+              allow list, update: if false;
+            }
+          }
+        }
+   4. (Optional, tidy) Firestore → TTL → add policy on collection "pairings",
+      field "expireAt" — Google auto-deletes stale pairing docs.
+   5. Project settings → General → Your apps → Web app → copy projectId + apiKey.
+   6. Fill CONFIG below, host this file anywhere public (Firebase Hosting:
+      `firebase deploy --only hosting` with this as public/setup.html — or any
+      static host). Note the public URL.
+   7. In main.js set FIREBASE = { projectId, apiKey, setupUrl: '<public URL>' }
+      and redeploy the TV app. The QR panel switches to cloud mode automatically.
+
+  Security model: the pairing doc id is a 16-char random code (~82 bits) shown
+  only on your TV; the TV deletes the doc the moment it reads it; TTL cleans up
+  anything unclaimed. Credentials transit Google's servers — acceptable for
+  IPTV logins, but know that's the trade for removing the LAN helper.
+============================================================================ -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Channelly Setup</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, system-ui, Roboto, sans-serif; background: #0b0f14; color: #eef2f6;
+         min-height: 100vh; display: flex; justify-content: center; padding: 28px 16px 48px; }
+  .card { width: 100%; max-width: 430px; }
+  h1 { font-size: 22px; margin: 6px 0 2px; }
+  .sub { color: #8ea0b0; font-size: 14px; margin-bottom: 20px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #8ea0b0; margin: 14px 0 6px; }
+  input { width: 100%; padding: 13px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #26313d;
+          background: #141b23; color: #eef2f6; outline: none; }
+  input:focus { border-color: #f2c14e; }
+  button { width: 100%; margin-top: 22px; padding: 15px; font-size: 16px; font-weight: 700; border: 0;
+           border-radius: 10px; background: #f2c14e; color: #1a1206; }
+  button:disabled { opacity: 0.5; }
+  #status { margin-top: 16px; padding: 13px 14px; border-radius: 10px; font-size: 14px; display: none; }
+  #status.ok  { display: block; background: #12291a; color: #7ee2a0; }
+  #status.err { display: block; background: #2b1414; color: #ff9c9c; }
+</style>
+</head>
+<body><div class="card">
+  <div style="font-size:32px">▶</div>
+  <h1>Channelly — add account</h1>
+  <p class="sub">Fill in your Xtream Codes details. The TV picks them up automatically within a few seconds.</p>
+  <label for="name">Account name (optional)</label>
+  <input id="name" type="text" placeholder="e.g. Home">
+  <label for="server">Server URL</label>
+  <input id="server" type="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="http://provider.example:8080">
+  <label for="username">Username</label>
+  <input id="username" type="text" autocapitalize="off" autocorrect="off" placeholder="Username">
+  <label for="password">Password</label>
+  <input id="password" type="password" placeholder="Password">
+  <button id="send" type="button">Send to TV</button>
+  <div id="status"></div>
+</div>
+<script>
+// Fill these with your Firebase project's values (step 5 above).
+var CONFIG = { projectId: 'iptvqrcode-2b976', apiKey: 'AIzaSyCpCkYaT9qVVF26YlLaCMu9UziUO54cAUU' };
+
+(function () {
+  var btn = document.getElementById('send'), st = document.getElementById('status');
+  var code = (location.hash || '').replace(/^#/, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 16);
+  function fail(m) { st.className = 'err'; st.textContent = m; btn.disabled = false; }
+
+  if (!code) { fail('Missing pairing code — scan the QR code shown on the TV.'); btn.disabled = true; }
+  if (!CONFIG.projectId || !CONFIG.apiKey) { fail('This page is not configured yet (CONFIG in the source).'); btn.disabled = true; }
+
+  btn.addEventListener('click', function () {
+    var server = document.getElementById('server').value.trim().replace(/\/+$/, '');
+    var username = document.getElementById('username').value.trim();
+    var password = document.getElementById('password').value;
+    if (!/^https?:\/\//.test(server)) { fail('Server URL must start with http:// or https://'); return; }
+    if (!username || !password) { fail('Username and password are required'); return; }
+    btn.disabled = true;
+
+    var url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.projectId) +
+      '/databases/(default)/documents/pairings?documentId=' + encodeURIComponent(code) +
+      '&key=' + encodeURIComponent(CONFIG.apiKey);
+    var body = { fields: {
+      name: { stringValue: document.getElementById('name').value.trim() },
+      server: { stringValue: server },
+      username: { stringValue: username },
+      password: { stringValue: password },
+      expireAt: { timestampValue: new Date(Date.now() + 10 * 60 * 1000).toISOString() }
+    } };
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (b) { throw new Error((b.error && b.error.message) || ('HTTP ' + r.status)); });
+        st.className = 'ok'; st.textContent = '✓ Sent! Look at your TV — the account is being added.';
+      })
+      .catch(function (e) { fail('Failed to send: ' + e.message); });
+  });
+})();
+</script>
+</body>
+</html>
