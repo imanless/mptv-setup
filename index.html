@@ -7,8 +7,8 @@
 <style>
   :root {
     color-scheme: light;
-    --canvas: #f5f5f7; --surface: #fbfbfd; --field-focus: #f0f5fb;
-    --text: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7;
+    --canvas: #f5f5f7; --surface: rgba(251, 251, 253, 0.78); --field-focus: rgba(251, 251, 253, 0.94);
+    --text: #1d1d1f; --muted: #6e6e73; --line: rgba(29, 29, 31, 0.1);
     --blue: #0071e3; --blue-pressed: #0066cc; --on-blue: #f5f5f7;
     --success-bg: #eaf7ee; --success: #167a3f; --error-bg: #fff0ef; --error: #b42318;
   }
@@ -17,7 +17,7 @@
   body {
     margin: 0; min-height: 100vh; min-height: 100dvh;
     padding: 40px 20px 40px; padding: 40px 20px max(40px, env(safe-area-inset-bottom));
-    display: flex; justify-content: center; background: var(--canvas); color: var(--text);
+    display: flex; justify-content: center; background: #f5f5f7; background: var(--canvas); color: #1d1d1f; color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -25,40 +25,51 @@
   .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 15px; font-weight: 600; }
   .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: var(--text); color: var(--surface); }
   .brand-mark svg { width: 16px; height: 16px; fill: currentColor; transform: translateX(1px); }
-  .page-header { padding: 44px 0 32px; }
+  .page-header { padding: 40px 0 28px; }
   h1 { margin: 0; font-size: 36px; line-height: 1.08; letter-spacing: 0; font-weight: 700; }
   .sub { max-width: 34ch; margin: 10px 0 0; color: var(--muted); font-size: 16px; line-height: 1.45; }
   .setup-form { display: grid; gap: 20px; }
-  .fields { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
-  .field { position: relative; display: grid; gap: 6px; padding: 13px 16px 12px; }
-  .field + .field { border-top: 1px solid var(--line); }
-  .field-label { color: var(--muted); font-size: 12px; line-height: 1.2; font-weight: 600; }
-  .optional { margin-left: 6px; font-weight: 400; }
+  .fields { display: block; }
+  .field {
+    position: relative; height: 84px; min-height: 84px; padding: 13px 18px 12px;
+    display: block; display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+    border: 1px solid rgba(29, 29, 31, 0.1); border: 1px solid var(--line); border-radius: 22px;
+    background: rgba(251, 251, 253, 0.78); background: var(--surface);
+    -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%);
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+  .field + .field { margin-top: 12px; }
+  .field-label { margin-bottom: 6px; display: block; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #6e6e73; color: var(--muted); font-size: 13px; line-height: 1.2; font-weight: 600; }
+  .optional { margin-left: auto; font-weight: 400; }
   input {
     width: 100%; min-height: 30px; padding: 0; border: 0; outline: 0;
-    border-radius: 0; background: transparent; color: var(--text);
-    font: inherit; font-size: 17px; line-height: 1.4;
+    border-radius: 0; background: transparent; color: #1d1d1f; color: var(--text);
+    font: inherit; font-size: 18px; line-height: 1.4;
+    -webkit-appearance: none; appearance: none;
   }
-  input::placeholder { color: var(--muted); opacity: 0.58; }
-  .field:focus-within { z-index: 1; outline: 2px solid var(--blue); outline-offset: -2px; background: var(--field-focus); }
+  input::placeholder { color: #6e6e73; color: var(--muted); opacity: 0.58; }
+  .field:focus-within {
+    z-index: 1; border-color: var(--blue); background: var(--field-focus);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.22); transform: scale(1.006);
+  }
   .send {
-    width: 100%; min-height: 56px; padding: 0 22px; border: 0; border-radius: 14px;
+    width: 100%; min-height: 58px; padding: 0 24px; border: 0; border-radius: 9999px;
     display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    background: var(--blue); color: var(--on-blue); font: inherit; font-size: 17px; font-weight: 600;
-    -webkit-tap-highlight-color: transparent;
+    background: #0071e3; background: var(--blue); color: #f5f5f7; color: var(--on-blue); font: inherit; font-size: 17px; font-weight: 600;
+    -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent;
   }
   .send svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .send:active { background: var(--blue-pressed); transform: scale(0.99); }
   .send:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
   .send:disabled { opacity: 0.52; transform: none; }
-  #status { display: none; padding: 14px 16px; border-radius: 12px; font-size: 14px; line-height: 1.45; }
+  #status { display: none; padding: 15px 18px; border-radius: 18px; font-size: 14px; line-height: 1.45; }
   #status.ok { display: block; background: var(--success-bg); color: var(--success); }
   #status.err { display: block; background: var(--error-bg); color: var(--error); }
   @media (prefers-color-scheme: dark) {
     :root {
       color-scheme: dark;
-      --canvas: #111113; --surface: #1c1c1e; --field-focus: #242a31;
-      --text: #f5f5f7; --muted: #a1a1a6; --line: #38383a;
+      --canvas: #101012; --surface: rgba(44, 44, 46, 0.72); --field-focus: rgba(58, 58, 60, 0.88);
+      --text: #f5f5f7; --muted: #a1a1a6; --line: rgba(245, 245, 247, 0.12);
       --blue: #0071e3; --blue-pressed: #0066cc; --on-blue: #f5f5f7;
       --success-bg: #14291b; --success: #66d58a; --error-bg: #321a19; --error: #ff9f9a;
     }
@@ -68,7 +79,7 @@
     .page-header { padding: 36px 0 28px; }
     h1 { font-size: 32px; }
   }
-  @media (prefers-reduced-motion: reduce) { .send { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .field, .send { transition: none; } .field:focus-within { transform: none; } }
 </style>
 </head>
 <body><main class="setup">
