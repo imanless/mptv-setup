@@ -1,36 +1,4 @@
 <!DOCTYPE html>
-<!-- ===========================================================================
-  Channelly — cloud phone-setup page (Firebase mode, no computer needed)
-
-  ONE-TIME SETUP (~5 minutes, free Spark plan):
-   1. console.firebase.google.com → Add project (any name, no Analytics needed).
-   2. Build → Firestore Database → Create database (production mode, any region).
-   3. Firestore → Rules → paste:
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            match /pairings/{code} {
-              allow create: if request.resource.data.keys().hasOnly(
-                ['server','username','password','name','expireAt']);
-              allow get, delete: if true;   // doc ids are unguessable 16-char codes
-              allow list, update: if false;
-            }
-          }
-        }
-   4. (Optional, tidy) Firestore → TTL → add policy on collection "pairings",
-      field "expireAt" — Google auto-deletes stale pairing docs.
-   5. Project settings → General → Your apps → Web app → copy projectId + apiKey.
-   6. Fill CONFIG below, host this file anywhere public (Firebase Hosting:
-      `firebase deploy --only hosting` with this as public/setup.html — or any
-      static host). Note the public URL.
-   7. In main.js set FIREBASE = { projectId, apiKey, setupUrl: '<public URL>' }
-      and redeploy the TV app. The QR panel switches to cloud mode automatically.
-
-  Security model: the pairing doc id is a 16-char random code (~82 bits) shown
-  only on your TV; the TV deletes the doc the moment it reads it; TTL cleans up
-  anything unclaimed. Credentials transit Google's servers — acceptable for
-  IPTV logins, but know that's the trade for removing the LAN helper.
-============================================================================ -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
