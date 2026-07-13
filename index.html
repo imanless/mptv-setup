@@ -37,59 +37,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Channelly Setup</title>
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; margin: 0; }
-  body { font-family: -apple-system, system-ui, Roboto, sans-serif; background: #0b0f14; color: #eef2f6;
-         min-height: 100vh; display: flex; justify-content: center; padding: 28px 16px 48px; }
-  .card { width: 100%; max-width: 430px; }
-  h1 { font-size: 22px; margin: 6px 0 2px; }
-  .sub { color: #8ea0b0; font-size: 14px; margin-bottom: 20px; }
-  label { display: block; font-size: 13px; font-weight: 600; color: #8ea0b0; margin: 14px 0 6px; }
-  input { width: 100%; padding: 13px 14px; font-size: 16px; border-radius: 10px; border: 1px solid #26313d;
-          background: #141b23; color: #eef2f6; outline: none; }
-  input:focus { border-color: #f2c14e; }
-  button { width: 100%; margin-top: 22px; padding: 15px; font-size: 16px; font-weight: 700; border: 0;
-           border-radius: 10px; background: #f2c14e; color: #1a1206; }
-  button:disabled { opacity: 0.5; }
-  #status { margin-top: 16px; padding: 13px 14px; border-radius: 10px; font-size: 14px; display: none; }
-  #status.ok  { display: block; background: #12291a; color: #7ee2a0; }
-  #status.err { display: block; background: #2b1414; color: #ff9c9c; }
+  :root {
+    color-scheme: light;
+    --canvas: #f5f5f7; --surface: #fbfbfd; --field-focus: #f0f5fb;
+    --text: #1d1d1f; --muted: #6e6e73; --line: #d2d2d7;
+    --blue: #0071e3; --blue-pressed: #0066cc; --on-blue: #f5f5f7;
+    --success-bg: #eaf7ee; --success: #167a3f; --error-bg: #fff0ef; --error: #b42318;
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--canvas); }
+  body {
+    margin: 0; min-height: 100vh; min-height: 100dvh;
+    padding: 40px 20px 40px; padding: 40px 20px max(40px, env(safe-area-inset-bottom));
+    display: flex; justify-content: center; background: var(--canvas); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .setup { width: 100%; max-width: 480px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 15px; font-weight: 600; }
+  .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: var(--text); color: var(--surface); }
+  .brand-mark svg { width: 16px; height: 16px; fill: currentColor; transform: translateX(1px); }
+  .page-header { padding: 44px 0 32px; }
+  h1 { margin: 0; font-size: 36px; line-height: 1.08; letter-spacing: 0; font-weight: 700; }
+  .sub { max-width: 34ch; margin: 10px 0 0; color: var(--muted); font-size: 16px; line-height: 1.45; }
+  .setup-form { display: grid; gap: 20px; }
+  .fields { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+  .field { position: relative; display: grid; gap: 6px; padding: 13px 16px 12px; }
+  .field + .field { border-top: 1px solid var(--line); }
+  .field-label { color: var(--muted); font-size: 12px; line-height: 1.2; font-weight: 600; }
+  .optional { margin-left: 6px; font-weight: 400; }
+  input {
+    width: 100%; min-height: 30px; padding: 0; border: 0; outline: 0;
+    border-radius: 0; background: transparent; color: var(--text);
+    font: inherit; font-size: 17px; line-height: 1.4;
+  }
+  input::placeholder { color: var(--muted); opacity: 0.58; }
+  .field:focus-within { z-index: 1; outline: 2px solid var(--blue); outline-offset: -2px; background: var(--field-focus); }
+  .send {
+    width: 100%; min-height: 56px; padding: 0 22px; border: 0; border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--blue); color: var(--on-blue); font: inherit; font-size: 17px; font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .send svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .send:active { background: var(--blue-pressed); transform: scale(0.99); }
+  .send:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  .send:disabled { opacity: 0.52; transform: none; }
+  #status { display: none; padding: 14px 16px; border-radius: 12px; font-size: 14px; line-height: 1.45; }
+  #status.ok { display: block; background: var(--success-bg); color: var(--success); }
+  #status.err { display: block; background: var(--error-bg); color: var(--error); }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --canvas: #111113; --surface: #1c1c1e; --field-focus: #242a31;
+      --text: #f5f5f7; --muted: #a1a1a6; --line: #38383a;
+      --blue: #0071e3; --blue-pressed: #0066cc; --on-blue: #f5f5f7;
+      --success-bg: #14291b; --success: #66d58a; --error-bg: #321a19; --error: #ff9f9a;
+    }
+  }
+  @media (max-width: 380px) {
+    body { padding-left: 16px; padding-right: 16px; }
+    .page-header { padding: 36px 0 28px; }
+    h1 { font-size: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .send { transition: none; } }
 </style>
 </head>
-<body><div class="card">
-  <div style="font-size:32px">▶</div>
-  <h1>Channelly — add account</h1>
-  <p class="sub">Fill in your Xtream Codes details. The TV picks them up automatically within a few seconds.</p>
-  <label for="name">Account name (optional)</label>
-  <input id="name" type="text" placeholder="e.g. Home">
-  <label for="server">Server URL</label>
-  <input id="server" type="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="http://provider.example:8080">
-  <label for="username">Username</label>
-  <input id="username" type="text" autocapitalize="off" autocorrect="off" placeholder="Username">
-  <label for="password">Password</label>
-  <input id="password" type="password" placeholder="Password">
-  <button id="send" type="button">Send to TV</button>
-  <div id="status"></div>
-</div>
+<body><main class="setup">
+  <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></span><span>Channelly</span></div>
+  <header class="page-header"><h1>Add account</h1><p class="sub">Enter your provider details to continue setup on your TV.</p></header>
+  <form class="setup-form" id="setupForm" autocomplete="off" novalidate>
+    <div class="fields">
+      <label class="field" for="name"><span class="field-label">Account name <span class="optional">Optional</span></span><input id="name" type="text" placeholder="Home"></label>
+      <label class="field" for="server"><span class="field-label">Server URL</span><input id="server" type="url" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="http://provider.example:8080"></label>
+      <label class="field" for="username"><span class="field-label">Username</span><input id="username" type="text" autocapitalize="off" autocorrect="off" placeholder="Username"></label>
+      <label class="field" for="password"><span class="field-label">Password</span><input id="password" type="password" placeholder="Password"></label>
+    </div>
+    <button class="send" id="send" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="15" x="2" y="7" rx="2"></rect><path d="m17 2-5 5-5-5"></path></svg><span id="sendLabel">Send to TV</span></button>
+    <div id="status" role="status" aria-live="polite"></div>
+  </form>
+</main>
 <script>
 // Fill these with your Firebase project's values (step 5 above).
 var CONFIG = { projectId: 'iptvqrcode-2b976', apiKey: 'AIzaSyCpCkYaT9qVVF26YlLaCMu9UziUO54cAUU' };
 
 (function () {
-  var btn = document.getElementById('send'), st = document.getElementById('status');
+  var form = document.getElementById('setupForm'), btn = document.getElementById('send');
+  var label = document.getElementById('sendLabel'), st = document.getElementById('status');
   var code = (location.hash || '').replace(/^#/, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 16);
-  function fail(m) { st.className = 'err'; st.textContent = m; btn.disabled = false; }
+  function setSending(on) { btn.disabled = on; label.textContent = on ? 'Sending' : 'Send to TV'; }
+  function fail(m) { st.className = 'err'; st.textContent = m; setSending(false); }
 
   if (!code) { fail('Missing pairing code — scan the QR code shown on the TV.'); btn.disabled = true; }
   if (!CONFIG.projectId || !CONFIG.apiKey) { fail('This page is not configured yet (CONFIG in the source).'); btn.disabled = true; }
 
-  btn.addEventListener('click', function () {
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
     var server = document.getElementById('server').value.trim().replace(/\/+$/, '');
     var username = document.getElementById('username').value.trim();
     var password = document.getElementById('password').value;
     if (!/^https?:\/\//.test(server)) { fail('Server URL must start with http:// or https://'); return; }
     if (!username || !password) { fail('Username and password are required'); return; }
-    btn.disabled = true;
+    setSending(true);
 
     var url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.projectId) +
       '/databases/(default)/documents/pairings?documentId=' + encodeURIComponent(code) +
@@ -104,7 +153,7 @@ var CONFIG = { projectId: 'iptvqrcode-2b976', apiKey: 'AIzaSyCpCkYaT9qVVF26YlLaC
     fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) {
         if (!r.ok) return r.json().then(function (b) { throw new Error((b.error && b.error.message) || ('HTTP ' + r.status)); });
-        st.className = 'ok'; st.textContent = '✓ Sent! Look at your TV — the account is being added.';
+        st.className = 'ok'; st.textContent = 'Sent to your TV. The account is being added.'; label.textContent = 'Sent to TV';
       })
       .catch(function (e) { fail('Failed to send: ' + e.message); });
   });
